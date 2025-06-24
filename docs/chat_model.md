@@ -53,7 +53,7 @@ pip install -U langchain-qwq[typing]
 from langchain_qwq import ChatQwQ
 
 model = ChatQwQ(model="qwq-32b")
-response = model.invoke("Hello, how are you?")
+response = model.invoke("你好，今天感觉怎么样？")
 print(response.content)
 ```
 
@@ -62,7 +62,7 @@ print(response.content)
 QwQ模型提供了推理/思考内容，可以通过`additional_kwargs`访问：
 
 ```python
-response = model.invoke("Hello")
+response = model.invoke("你好，今天感觉怎么样？")
 content = response.content
 reasoning = response.additional_kwargs.get("reasoning_content", "")
 print(f"Response: {content}")
@@ -79,7 +79,7 @@ model = ChatQwQ(model="qwq-32b")
 is_first = True
 is_end = True
 
-for msg in model.stream("Hello"):
+for msg in model.stream("你好，今天感觉怎么样？"):
     if hasattr(msg, 'additional_kwargs') and "reasoning_content" in msg.additional_kwargs:
         if is_first:
             print("Starting to think...")
@@ -98,15 +98,15 @@ for msg in model.stream("Hello"):
 is_first = True
 is_end = True
 
-async for msg in model.astream("Hello"):
+async for msg in model.astream("你好，今天感觉怎么样？"):
     if hasattr(msg, 'additional_kwargs') and "reasoning_content" in msg.additional_kwargs:
         if is_first:
-            print("Starting to think...")
+            print("开始思考...")
             is_first = False
         print(msg.additional_kwargs["reasoning_content"], end="", flush=True)
     elif hasattr(msg, 'content') and msg.content:
         if is_end:   
-            print("\nThinking ended")
+            print("\n思考结束")
             is_end = False
         print(msg.content, end="", flush=True)
 ```
@@ -118,14 +118,12 @@ async for msg in model.astream("Hello"):
 ```python
 from langchain_qwq.utils import convert_reasoning_to_content
 
-# Sync
-for msg in convert_reasoning_to_content(model.stream("Hello")):
+for msg in convert_reasoning_to_content(model.stream("你好，今天感觉怎么样？")):
     print(msg.content, end="", flush=True)
 
-# Async
 from langchain_qwq.utils import aconvert_reasoning_to_content
 
-async for msg in aconvert_reasoning_to_content(model.astream("Hello")):
+async for msg in aconvert_reasoning_to_content(model.astream("你好")):
     print(msg.content, end="", flush=True)
 ```
 
@@ -133,7 +131,7 @@ async for msg in aconvert_reasoning_to_content(model.astream("Hello")):
 
 ```python
 async for msg in aconvert_reasoning_to_content(
-    model.astream("Hello"), 
+    model.astream("你好，今天感觉怎么样？"), 
     think_tag=("<Start>", "<End>")
 ):
     print(msg.content, end="", flush=True)
@@ -148,11 +146,11 @@ from langchain_core.tools import tool
 
 @tool
 def get_weather(city: str) -> str:
-    """Get the weather for a city"""
-    return f"The weather in {city} is sunny."
+    """查询某个地方的天气"""
+    return f"{city}的天气是晴天"
 
 bound_model = model.bind_tools([get_weather])
-response = bound_model.invoke("What's the weather in New York?")
+response = bound_model.invoke("西安的天气如何")
 print(response.tool_calls)
 ```
 
@@ -161,7 +159,7 @@ print(response.tool_calls)
 ```python
 # Enable parallel tool calls
 response = bound_model.invoke(
-    "What's the weather in New York and London?", 
+    "西安和温州的天气如何", 
     parallel_tool_calls=True
 )
 print(response.tool_calls)
@@ -179,7 +177,7 @@ class User(BaseModel):
     age: int
 
 struct_model = model.with_structured_output(User, method="json_mode")
-response = struct_model.invoke("Hello, I'm John and I'm 25 years old")
+response = struct_model.invoke("我叫张三，今年25岁")
 print(response)  # User(name='John', age=25)
 ```
 
@@ -187,7 +185,7 @@ print(response)  # User(name='John', age=25)
 
 ```python
 struct_model = model.with_structured_output(User, method="function_calling")
-response = struct_model.invoke("My name is Alice and I'm 30")
+response = struct_model.invoke("我叫李四，今年30岁")
 print(response)  # User(name='Alice', age=30)
 ```
 
@@ -201,7 +199,7 @@ agent = create_tool_calling_agent(
     model,
     [get_weather],
     prompt=ChatPromptTemplate.from_messages([
-        ("system", "You are a helpful assistant"),
+        ("system", "你是一个天气助手"),
         ("placeholder", "{chat_history}"),
         ("human", "{input}"),
         ("placeholder", "{agent_scratchpad}"),
@@ -209,7 +207,7 @@ agent = create_tool_calling_agent(
 )
 
 agent_executor = AgentExecutor(agent=agent, tools=[get_weather])
-result = agent_executor.invoke({"input": "What's the weather in Beijing?"})
+result = agent_executor.invoke({"input": "西安的天气如何"})
 print(result)
 ```
 
@@ -222,12 +220,10 @@ print(result)
 ```python
 from langchain_qwq import ChatQwen
 
-# Qwen3 model
 model = ChatQwen(model="qwen3-32b")
-response = model.invoke("Hello")
+response = model.invoke("你好，今天感觉怎么样？")
 print(response.content)
 
-# Access reasoning content (for Qwen3)
 reasoning = response.additional_kwargs.get("reasoning_content", "")
 print(f"Reasoning: {reasoning}")
 ```
@@ -239,9 +235,8 @@ print(f"Reasoning: {reasoning}")
 对于Qwen3模型，它支持混合推理模式，因此你可以关闭思考模式通过`enable_thinking`参数。
 
 ```python
-# Disable thinking for open-source Qwen3 models
 model = ChatQwen(model="qwen3-32b", enable_thinking=False)
-response = model.invoke("Hello")
+response = model.invoke("你好，今天感觉怎么样？")
 print(response.content)  # No reasoning content
 ```
 
@@ -249,9 +244,8 @@ print(response.content)  # No reasoning content
 
 当然了也可以启用思考模式，但是开源模型默认是开启的，而闭源的模型则是默认关闭的。
 ```python
-# Enable thinking for proprietary models
 model = ChatQwen(model="qwen-plus-latest", enable_thinking=True)
-response = model.invoke("Hello")
+response = model.invoke("你好，今天感觉怎么样？")
 reasoning = response.additional_kwargs.get("reasoning_content", "")
 print(f"Reasoning: {reasoning}")
 ```
@@ -259,9 +253,8 @@ print(f"Reasoning: {reasoning}")
 #### 控制思考长度
 
 ```python
-# Set thinking budget (max thinking tokens)
 model = ChatQwen(model="qwen3-32b", thinking_budget=20)
-response = model.invoke("Hello")
+response = model.invoke("你好，今天感觉怎么样？")
 reasoning = response.additional_kwargs.get("reasoning_content", "")
 print(f"Limited reasoning: {reasoning}")
 ```
@@ -272,16 +265,16 @@ print(f"Limited reasoning: {reasoning}")
 
 ```python
 model = ChatQwen(model="qwen-max")
-print(model.invoke("Hello").content)
+print(model.invoke("你好，今天感觉怎么样？").content)
 
 
 bound_model = model.bind_tools([get_weather])
-response = bound_model.invoke("Weather in Shanghai and Beijing?", parallel_tool_calls=True)
+response = bound_model.invoke("西安和温州的天气如何", parallel_tool_calls=True)
 print(response.tool_calls)
 
 
 struct_model = model.with_structured_output(User, method="json_mode")
-result = struct_model.invoke("I'm Bob, 28 years old")
+result = struct_model.invoke("我叫王五，今年28岁")
 print(result)
 ```
 
@@ -289,7 +282,7 @@ print(result)
 
 ```python
 model = ChatQwen(model="qwen2.5-72b-instruct")
-print(model.invoke("Hello").content)
+print(model.invoke("你好，今天感觉怎么样？").content)
 
 bound_model = model.bind_tools([get_weather])
 struct_model = model.with_structured_output(User, method="json_mode")
@@ -310,7 +303,7 @@ messages = [
                 "url": "https://example.com/image.jpg"
             },
         },
-        {"type": "text", "text": "What do you see in this image?"},
+        {"type": "text", "text": "图中描绘的是什么景象?"},
     ])
 ]
 
